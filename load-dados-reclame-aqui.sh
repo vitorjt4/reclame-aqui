@@ -41,7 +41,7 @@ LoadHist()
 }
 export -f LoadHist
 
-#python ${DIR}/${BOT} START DAILY
+python ${DIR}/${BOT} START DAILY
 
 ### Carrega arquivos nas tabelas staging
 
@@ -79,6 +79,6 @@ echo "$SCRIPTNAME;$STARTDATE;$ENDDATE" >> $LOG
 
 echo -e "$(horario):Fim da execucao.\n"
 
-#python ${DIR}/${BOT} "END"
+python ${DIR}/${BOT} "END"
 
 exit 0

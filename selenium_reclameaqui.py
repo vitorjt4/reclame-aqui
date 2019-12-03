@@ -45,16 +45,16 @@ for empresa in empresas:
 
     driver.get("https://www.reclameaqui.com.br/empresa/"+empresa+"/")
     print('Parsing {}...'.format(empresa))
-    element_present = EC.presence_of_element_located((By.XPATH, '//*[@id="reputacao-da-empresa"]/div/div/div/div[3]/div/div[1]/div/div[2]/p[2]/span'))
+    element_present = EC.presence_of_element_located((By.XPATH, '//*[@id="reputacao-da-empresa"]/div/div/div/div[3]/div[1]/div[1]/div[1]/div/div[1]/div[2]/p[2]'))
     WebDriverWait(driver, WAIT).until(element_present)
     sleep(DELAY)
     ### avaliacoes resumidas da empresa
-    nota = driver.find_element_by_xpath('//*[@id="reputacao-da-empresa"]/div/div/div/div[3]/div/div[1]/div/div[2]/p[2]/span').text.replace('--','')
+    nota = driver.find_element_by_xpath('//*[@id="reputacao-da-empresa"]/div/div/div/div[3]/div[1]/div[1]/div[1]/div/div[1]/div[2]/p[2]/span[1]').text.replace('--','')
     reclamacoes = driver.find_element_by_xpath('//*[@id="link-list-complain-all-middle"]').text
     respondidas = driver.find_element_by_xpath('//*[@id="link-list-complain-answered-middle"]').text
     nao_respondidas = driver.find_element_by_xpath('//*[@id="link-list-complain-not-answered-middle"]').text
     avaliadas = driver.find_element_by_xpath('//*[@id="link-list-complain-evaluated-middle"]').text
-    nota_consumidor = driver.find_element_by_xpath('//*[@id="reputacao-da-empresa"]/div/div/div/div[3]/div/div[2]/div/span[4]').text.replace(',','.').replace('--','')
+    nota_consumidor = driver.find_element_by_xpath('//*[@id="reputacao-da-empresa"]/div/div/div/div[3]/div[1]/div[1]/div[2]/div[4]/span').text.replace(',','.').replace('--','')
 
     categoria = []
     servico = []

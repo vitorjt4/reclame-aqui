@@ -1,13 +1,12 @@
 import os
 import re
 import psycopg2
+import csv
 from collections import Counter
 import credentials
-import nltk
-import csv
-from gensim.models import Phrases
-from gensim.models import Word2Vec
+from nltk.tokenize import word_tokenize,sent_tokenize
 from nltk.corpus import stopwords
+from nltk.util import ngrams
 import psycopg2
 import credentials
 from subprocess import call
@@ -18,7 +17,7 @@ DATABASE, HOST, USER, PASSWORD = credentials.setDatabaseLogin()
 stopwords = stopwords.words('portuguese')
 p = enchant.Dict("pt_BR")
 e = enchant.Dict()
-nonstopwords = ['intermedium','isafe','sms','xiaomi','nfc','sicoob','wifi','cdb','redmi','ios','mei','crashar','nuconta','samsung','iphone','aff','ok','credicard','criptomoedas','cdbs','bugado','itoken','broker','fintech','fintechs','uber','fgc','superapp','instagram','facebook','whatsapp','blackfriday','friday']
+nonstopwords = ['intermedium','isafe','sms','xiaomi','nfc','sicoob','wifi','cdb','redmi','ios','mei','crashar','nuconta','samsung','iphone','aff','ok','credicard','criptomoedas','cdbs','bugado','itoken','broker','fintech','fintechs','superapp','instagram','facebook','whatsapp','blackfriday','friday']
 
 def words(text):
     pattern = re.compile(r"[^\s]+")
@@ -29,12 +28,12 @@ def words(text):
 
 ### variaveis
 outdir = '/home/ubuntu/scripts/load-dados-reclame-aqui/csv/'
-file = 'bigram.csv'
+file = 'trigram.csv'
 query_app = "SELECT empresa_id FROM reclame_aqui_dw.empresa"
 query_company = "SELECT empresa FROM reclame_aqui_dw.empresa"
-query_data = "SELECT DISTINCT ano,semana FROM reclame_aqui_dw.vw_reclamacoes_avaliadas WHERE empresa_id = '{}' AND semana != date_part('week',current_date) ORDER BY 2,1"
-query_comentario = "SELECT reclamacao FROM reclame_aqui_dw.vw_reclamacoes_avaliadas WHERE empresa_id = '{}' AND ano = {} AND semana = {}"
-tablename = 'reclame_aqui_dw.bigrams_reclamacoes_avaliadas'
+query_data = "SELECT DISTINCT ano,mes FROM reclame_aqui_dw.vw_reclamacoes_avaliadas WHERE empresa_id = '{}' AND mes != date_part('month',current_date) ORDER BY 2,1"
+query_comentario = "SELECT reclamacao FROM reclame_aqui_dw.vw_reclamacoes_avaliadas WHERE empresa_id = '{}' AND ano = {} AND mes = {}"
+tablename = 'reclame_aqui_dw.trigrams_reclamacoes_avaliadas'
 
 ### conecta no banco de dados
 db_conn = psycopg2.connect("dbname='{}' user='{}' host='{}' password='{}'".format(DATABASE, USER, HOST, PASSWORD))
@@ -54,41 +53,28 @@ with open(outdir+file,'w', newline="\n", encoding="utf-8") as ofile:
         print('Parsing '+app+'...')
         cursor.execute(query_data.format(app))
         datas = [item for item in cursor.fetchall()]
-        for ano,semana in [datas[-1]]:
-            print('Ano: {} - Semana: {}'.format(ano,semana))
-            cursor.execute(query_comentario.format(app,ano,semana))
-            comments = [item[0] for item in cursor.fetchall()]
-
-            bigram = Phrases(min_count=1, threshold=5)
-            sentences = []
-            for row in comments:
-                try:
-                    sentence = [words(word) for word in nltk.word_tokenize(row,language='portuguese')]
+        for ano,mes in datas:
+            try:
+                print('Ano: {} - Mês: {}'.format(ano,mes))
+                cursor.execute(query_comentario.format(app,ano,mes))
+                comments = [str(item[0]) for item in cursor.fetchall()]
+                ltrigrams = []
+                for comment in comments:
+                    sentence = [words(word) for word in word_tokenize(comment,language='portuguese')]
                     sentence = [x.replace('oq','que').replace('vcs','vocês').replace('vc','você').replace('funcao','função').replace('notificacoes','notificações').replace('hj','hoje').replace('pq','porque').replace('msm','mesmo').replace('td','tudo').replace('vzs','vezes').replace('vlw','valeu').replace('msg','mensagem').replace('mt','muito') for x in sentence if x]
                     sentence = [x for x in sentence if x not in stopwords]
-                    #sentence = [p.suggest(word)[0].lower() if word not in nonstopwords and (not p.check(word) and not e.check(word)) and p.suggest(word) and word not in app.lower() else word for word in sentence]
-                    sentences.append(sentence)
-                    bigram.add_vocab([sentence])
-                except:
-                    pass
+                    trigrams=ngrams(sentence,3)
+                    ltrigrams += list(trigrams)
+                counter = Counter(ltrigrams)
 
-            try:
-                #print(sentences)
-                bigram_model = Word2Vec(bigram[sentences])
-                bigram_model_counter = Counter()
-
-                for key in bigram_model.wv.vocab.keys():
-                    if len(key.split("_")) > 1:
-                        bigram_model_counter[key] += bigram_model.wv.vocab[key].count
-
-                most_commons =  bigram_model_counter.most_common()
-                for phrase,counts in most_commons:
-                    if phrase.rstrip('_'):
-                        writer.writerow([app,ano,semana,phrase.rstrip('_'),counts])
+                for trigram,count in counter.most_common():
+                    if trigram and count > 1:
+                        trigram = '_'.join(trigram)
+                        writer.writerow([app,ano,mes,trigram.rstrip('_'),count])
             except:
-                print('Error')
                 pass
-### copy
+
+## copy
 with open(outdir+file, 'r') as ifile:
     SQL_STATEMENT = "COPY %s FROM STDIN WITH CSV DELIMITER AS ';' NULL AS ''"
     print("Executing Copy in "+tablename)
@@ -98,5 +84,5 @@ cursor.close()
 db_conn.close()
 os.remove(outdir+file)
 
-### VACUUM ANALYZE
+# ### VACUUM ANALYZE
 call('psql -d torkcapital -c "VACUUM VERBOSE ANALYZE '+tablename+'";',shell=True)

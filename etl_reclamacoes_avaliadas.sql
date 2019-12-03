@@ -48,7 +48,7 @@ VACUUM ANALYZE reclame_aqui_dw.reclamacao;
 \! echo "Carregando dados na tabela fato reclamacoes_avaliadas..."
 
 COPY(
-SELECT e.empresa_id, d.datetime, c.cidade_id, r.reclamacao_id, f.nota
+SELECT distinct e.empresa_id, d.datetime, c.cidade_id, r.reclamacao_id, f.nota
 	FROM reclame_aqui.reclamacoes_stg f
 	JOIN reclame_aqui_dw.datetime d ON d.datetime=f.datetime
 	JOIN reclame_aqui_dw.empresa e ON e.empresa_id=f.empresa_id

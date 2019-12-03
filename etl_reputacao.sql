@@ -5,7 +5,7 @@
 
 INSERT INTO reclame_aqui_dw.date
 SELECT distinct date, date_part('week', date),date_part('month', date),date_part('year', date)
-	FROM reclame_aqui.reputacao_stg WHERE date not in (SELECT date FROM reclame_aqui_dw.date)
+	FROM reclame_aqui.reputacao_stg WHERE date not in (SELECT dia FROM reclame_aqui_dw.date)
 ORDER BY 1;
 
 VACUUM ANALYZE reclame_aqui_dw.date;
