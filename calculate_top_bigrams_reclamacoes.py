@@ -30,8 +30,8 @@ def words(text):
 ### variaveis
 outdir = '/home/ubuntu/scripts/load-dados-reclame-aqui/csv/'
 file = 'bigram.csv'
-query_app = "SELECT empresa_id FROM reclame_aqui_dw.empresa"
-query_company = "SELECT empresa FROM reclame_aqui_dw.empresa"
+query_app = "SELECT empresa_id FROM reclame_aqui_dw.empresa WHERE empresa_id != 'btg-pactual-digital'"
+query_company = "SELECT empresa FROM reclame_aqui_dw.empresa WHERE empresa_id != 'btg-pactual-digital'"
 query_data = "SELECT DISTINCT ano,semana FROM reclame_aqui_dw.vw_reclamacoes_avaliadas WHERE empresa_id = '{}' AND semana != date_part('week',current_date) ORDER BY 2,1"
 query_comentario = "SELECT reclamacao FROM reclame_aqui_dw.vw_reclamacoes_avaliadas WHERE empresa_id = '{}' AND ano = {} AND semana = {}"
 tablename = 'reclame_aqui_dw.bigrams_reclamacoes_avaliadas'

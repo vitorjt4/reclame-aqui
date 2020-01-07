@@ -35,7 +35,7 @@ driver = webdriver.Chrome(executable_path='/home/ubuntu/scripts/load-dados-recla
 db_conn = psycopg2.connect("dbname='{}' user='{}' host='{}' password='{}'".format(DATABASE, USER, HOST, PASSWORD))
 cursor = db_conn.cursor()
 print('Connected to the database')
-query = "SELECT empresa_id FROM reclame_aqui_dw.empresa ORDER BY 1"
+query = "SELECT empresa_id FROM reclame_aqui_dw.empresa WHERE empresa_id != 'btg-pactual-digital' ORDER BY 1"
 cursor.execute(query)
 empresas = [item[0] for item in cursor.fetchall()]
 cursor.close()
@@ -122,6 +122,8 @@ for empresa in empresas:
                 titulo = driver.find_element_by_xpath('//*[@id="complain-detail"]/div/div[1]/div[1]/div/div[1]/div[2]/div[1]/h1').text
                 cidade = driver.find_element_by_xpath('//*[@id="complain-detail"]/div/div[1]/div[1]/div/div[1]/div[2]/div[1]/ul[1]/li[1]').text.split('-')[0].strip()
                 estado = driver.find_element_by_xpath('//*[@id="complain-detail"]/div/div[1]/div[1]/div/div[1]/div[2]/div[1]/ul[1]/li[1]').text.split('-')[-1].strip()
+                if len(estado) > 2:
+                    estado = ''
                 id = driver.find_element_by_xpath('//*[@id="complain-detail"]/div/div[1]/div[1]/div/div[1]/div[2]/div[1]/ul[1]/li[2]/b').text.split(' ')[-1]
                 current_date = driver.find_element_by_xpath('//*[@id="complain-detail"]/div/div[1]/div[1]/div/div[1]/div[2]/div[1]/ul[1]/li[3]').text
                 current_date = str(datetime.strptime(current_date, '%d/%m/%y às %Hh%M')) ### parser da data no formato do DB
